@@ -86,7 +86,7 @@
 
     //phase
     //train
-    var trainPhase;
+    var trainPhase = [1,1,1,1,1,1,1,1,1,1,0];
     var whatPhase = 1;
     var trialCounter;
 
