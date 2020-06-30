@@ -380,7 +380,8 @@
     function getCohort(){
 
       var params = 'lim=1';
-      var url = 'http://localhost:3000/flash';
+      //var url = 'http://localhost:3000/flash';
+      var url = 'https://coindm.herokuapp.com/flash';
       var xhr = createCORSRequest('GET', url + "?" + params);
       if (!xhr) {
            throw new Error('CORS not supported');
@@ -899,7 +900,8 @@ function sendData(){
     var jsondata = JSON.parse(text);
     //console.log(jsondata);
     var data = JSON.stringify(jsondata);
-    var url = 'http://localhost:3000/flash';
+    //var url = 'http://localhost:3000/flash';
+    var url = 'https://coindm.herokuapp.com/flash'
     var xhr = createCORSRequest('POST', url);
        if (!xhr) {
          throw new Error('CORS not supported');
@@ -933,7 +935,8 @@ function getHighScore(){
 
  //get High Score
     var params = 'lim=1';
-    var url = 'http://localhost:3000/flash';
+    //var url = 'http://localhost:3000/flash';
+    var url = 'https://coindm.herokuapp.com/flash'
     var xhr = createCORSRequest('GET', url + "?" + params);
     if (!xhr) {
          throw new Error('CORS not supported');
