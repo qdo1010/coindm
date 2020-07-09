@@ -36,7 +36,7 @@ app.listen(PORT, async function() {
 
 //Route to create new player
 app.post("/flash",async function(req,res){
-	let {username, hc, score, rw, lflash, rflash, rt, ct} = req.body;
+	let {username, hc, score, rw, lflash, rflash, rt, choice, ct} = req.body;
 	const alreadyExisting = await db
         	.collection("flash")
 	   	.findOne({username: username})
@@ -46,14 +46,14 @@ app.post("/flash",async function(req,res){
 	}
 	else{
 	//create new
-		await db.collection("flash").insertOne({username,hc, score, rw, lflash,rflash, rt,ct});
+		await db.collection("flash").insertOne({username,hc, score, rw, lflash,rflash, rt,choice,ct});
 		console.log(`Created player ${username}`);
 		res.send({ status:true, msg:"player created"});
 	}
 	});
 
 app.put("/flash",async function(req,res){
-let {username, hc, score, rw, lflash,rflash, rt,ct} = req.body;
+let {username, hc, score, rw, lflash,rflash, rt,choice,ct} = req.body;
 //check if username already exists
 const alreadyExisting = await db
 	.collection("players")
@@ -62,7 +62,7 @@ if(alreadyExisting){
 //update player object w the username
 	await db
 		.collection("flash")
-		.updateOne({username},{$set:{username, hc, score, rw, lflash, rflash, rt, ct}});
+		.updateOne({username},{$set:{username, hc, score, rw, lflash, rflash, rt,choice, ct}});
 	console.log(`Player ${username} score updated to ${score}`);
 	res.send({status:true, msg:"player score updated"});
 }
@@ -73,7 +73,7 @@ else{
 
 //delete player
 app.delete("/flash",async function(req,res){
-	let {username, hc, score, rw, lflash, rflash, rt, ct} = req.body;
+	let {username, hc, score, rw, lflash, rflash, rt, choice, ct} = req.body;
 	//check if usrname already exists
 	const alreadyExisting = await db
 		.collection("flash")
