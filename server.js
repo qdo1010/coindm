@@ -24,7 +24,7 @@ res.send("leaderboard");
 	{useNewUrlParser: true }
 );
 
-db = client.db("Flash");
+db = client.db("Eviaco");
 
 app.listen(PORT, async function() {
  console.log(`Listening on Port ${PORT}`);
@@ -35,10 +35,10 @@ app.listen(PORT, async function() {
 })();
 
 //Route to create new player
-app.post("/flash",async function(req,res){
+app.post("/eviaco",async function(req,res){
 	let {username, hc, score, rw, lflash, rflash, rt, choice, ct} = req.body;
 	const alreadyExisting = await db
-        	.collection("flash")
+        	.collection("eviaco")
 	   	.findOne({username: username})
 
 	if (alreadyExisting){
@@ -46,22 +46,22 @@ app.post("/flash",async function(req,res){
 	}
 	else{
 	//create new
-		await db.collection("flash").insertOne({username,hc, score, rw, lflash,rflash, rt,choice,ct});
+		await db.collection("eviaco").insertOne({username,hc, score, rw, lflash,rflash, rt,choice,ct});
 		console.log(`Created player ${username}`);
 		res.send({ status:true, msg:"player created"});
 	}
 	});
 
-app.put("/flash",async function(req,res){
+app.put("/eviaco",async function(req,res){
 let {username, hc, score, rw, lflash,rflash, rt,choice,ct} = req.body;
 //check if username already exists
 const alreadyExisting = await db
-	.collection("players")
+	.collection("eviaco")
 	.findOne({username:username});
 if(alreadyExisting){
 //update player object w the username
 	await db
-		.collection("flash")
+		.collection("eviaco")
 		.updateOne({username},{$set:{username, hc, score, rw, lflash, rflash, rt,choice, ct}});
 	console.log(`Player ${username} score updated to ${score}`);
 	res.send({status:true, msg:"player score updated"});
@@ -72,14 +72,14 @@ else{
 });
 
 //delete player
-app.delete("/flash",async function(req,res){
+app.delete("/eviaco",async function(req,res){
 	let {username, hc, score, rw, lflash, rflash, rt, choice, ct} = req.body;
 	//check if usrname already exists
 	const alreadyExisting = await db
-		.collection("flash")
+		.collection("eviaco")
 		.findOne({username:username});
 	if(alreadyExisting){
-		await db.collection("flash").deleteOne({username});
+		await db.collection("eviaco").deleteOne({username});
 		console.log(`Player ${username} deleted`);
 		res.send({ status:true, msg:"player deleted"});
 	}
@@ -90,10 +90,10 @@ app.delete("/flash",async function(req,res){
 
 //Leaderboard
 //access the leaderboard
-app.get("/flash",async function(req,res){
+app.get("/eviaco",async function(req,res){
 //retrieve lim from the query string info
 	let {lim} = req.query;
-	db.collection("flash")
+	db.collection("eviaco")
 	  .find()
 	  .sort({hc:-1})	
 	  .limit(parseInt(lim,1))
