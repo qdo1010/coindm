@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(express.json());
+const path = require('path')
 
 const MongoClient = require("mongodb").MongoClient;
 
@@ -33,6 +34,12 @@ app.listen(PORT, async function() {
   }
  });
 })();
+
+
+app.use(express.static(path.join(__dirname, 'app')));
+app.get('/app',function(req,res){
+  res.sendFile(path.join(__dirname+'/app/index.html'));
+});
 
 //Route to create new player
 app.post("/eviaco",async function(req,res){
@@ -100,7 +107,7 @@ app.get("/eviaco",async function(req,res){
 	  .toArray(function(err, result){
 		if(err)
 			res.send({status:false, msg:"failed to retrieve players"});
-		console.log(Array.from(result));
+		//console.log(Array.from(result));
 		res.send({status:true, msg:result });;
 	});
 });
