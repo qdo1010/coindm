@@ -54,7 +54,7 @@ app.post("/eviaco",async function(req,res){
 	else{
 	//create new
 		await db.collection("eviaco").insertOne({username,hc, score, rw, lflash,rflash, rt,choice,ct,lbin,rbin,ft});
-		console.log(`Created player ${username}`);
+//		console.log(`Created player ${username}`);
 		res.send({ status:true, msg:"player created"});
 	}
 	});
@@ -70,7 +70,7 @@ if(alreadyExisting){
 	await db
 		.collection("eviaco")
 		.updateOne({username},{$set:{username, hc, score, rw, lflash, rflash, rt,choice, ct,lbin,rbin,ft}});
-	console.log(`Player ${username} score updated to ${score}`);
+//	console.log(`Player ${username} score updated to ${score}`);
 	res.send({status:true, msg:"player score updated"});
 }
 else{
@@ -87,7 +87,7 @@ app.delete("/eviaco",async function(req,res){
 		.findOne({username:username});
 	if(alreadyExisting){
 		await db.collection("eviaco").deleteOne({username});
-		console.log(`Player ${username} deleted`);
+//		console.log(`Player ${username} deleted`);
 		res.send({ status:true, msg:"player deleted"});
 	}
 	else{
