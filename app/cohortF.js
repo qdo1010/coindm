@@ -458,7 +458,7 @@
 
     function getHC(){
       var params = 'lim=1';
-      var url =  'http://127.0.0.1:3000/eviaco'; //
+      var url =  '/eviaco'; //
      // var url = 'https://coindm.herokuapp.com/eviaco';
       var xhr = createCORSRequest('GET', url + "?" + params);
       if (!xhr) {
@@ -480,7 +480,7 @@
 
     function getCohort(){
       var params = 'lim=1';
-      var url =  'http://127.0.0.1:3000/eviaco';
+      var url =  '/eviaco';
       //var url = 'https://coindm.herokuapp.com/eviaco';
 
       var xhr = createCORSRequest('GET', url + "?" + params);
@@ -1124,7 +1124,7 @@ function sendData(){
     var jsondata = JSON.parse(text);
     //console.log(jsondata);
     var data = JSON.stringify(jsondata);
-    var url = 'https://coindm.herokuapp.com/eviaco';
+    var url = '/eviaco';
     var xhr = createCORSRequest('POST', url);
        if (!xhr) {
          throw new Error('CORS not supported');
@@ -1156,7 +1156,7 @@ function getHighScore(){
 
  //get High Score
     var params = 'lim=1';
-    var url = 'https://coindm.herokuapp.com/eviaco';
+    var url = '/eviaco';
     var xhr = createCORSRequest('GET', url + "?" + params);
     if (!xhr) {
          throw new Error('CORS not supported');
