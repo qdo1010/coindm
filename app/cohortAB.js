@@ -674,7 +674,7 @@ window.onresize = resize;
             transition();
           }
 
-          if (trialCounter > 12){
+          if (trialCounter > 99){
             
             state = sendData;
           }
@@ -1324,7 +1324,7 @@ function getHighScore(){
        globalScoreMessage.text = "High Score " + obj.msg[0].hc.toString();
        targetScore.text = obj.msg[0].hc.toString();
        targetScore.visible = 1;
-       yourScoreMessage.text = "Your Score " + totalScore.toString();
+       yourScoreMessage.text = totalScore.toString();
     //   var title = getTitle(text);
     //   alert('Response from CORS request to ' + url + ': ' + title);
     }
