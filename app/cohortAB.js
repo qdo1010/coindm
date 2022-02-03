@@ -678,7 +678,7 @@ window.onresize = resize;
             transition();
           }
 
-          if (trialCounter > 10){
+          if (trialCounter > 199){
             
             state = sendData;
           }
