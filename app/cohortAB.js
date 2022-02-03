@@ -50,7 +50,7 @@ function resize() {
     app.renderer.view.style.width = w + 'px';
     app.renderer.view.style.height = h + 'px';
     app.renderer.view.style.left = '25%';
-    app.renderer.view.style.top = '20%'; 
+    app.renderer.view.style.top = '10%'; 
     //app.renderer.view.style.margin = -w/2 + 'px 0 0 ' -h/2 + 'px';    
 }
 window.onresize = resize;
