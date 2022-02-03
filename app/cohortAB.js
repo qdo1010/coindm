@@ -430,6 +430,7 @@ window.onresize = resize;
         };
 
         radar1.on('mousedown',function (e){
+        RT = performance.now() - testBinStartTimer;
         isRadarSelected1=1;
         if (playerBullets.length < 1){
             let rectangle = new Graphics();
@@ -444,6 +445,7 @@ window.onresize = resize;
       });
 
       radar2.on('mousedown',function (e){
+        RT = performance.now() - testBinStartTimer;
         isRadarSelected2=1;
         if (playerBullets.length < 1){
             let rectangle = new Graphics();
@@ -458,6 +460,7 @@ window.onresize = resize;
       });
 
       radar1.on('touchstart',function (e){
+        RT = performance.now() - testBinStartTimer;
         isRadarSelected1=1;
         if (playerBullets.length < 1){
             let rectangle = new Graphics();
@@ -472,6 +475,7 @@ window.onresize = resize;
       });
 
       radar2.on('touchstart',function (e){
+        RT = performance.now() - testBinStartTimer;
         isRadarSelected2=1;
         if (playerBullets.length < 1){
             let rectangle = new Graphics();
@@ -674,7 +678,7 @@ window.onresize = resize;
             transition();
           }
 
-          if (trialCounter > 199){
+          if (trialCounter > 10){
             
             state = sendData;
           }
@@ -784,7 +788,7 @@ window.onresize = resize;
 
     //if ((binCount > 9) || (isRadarSelected2) || (isRadarSelected1)){ //10 bin 13*260ms = 3s ish
     if ( (isRadarSelected2) || (isRadarSelected1)){ //10 bin 13*260ms = 3s ish
-      RT = performance.now() - testBinStartTimer;
+      
       binCount = 0;
       frameCount = 0;
       lflash = 0;
