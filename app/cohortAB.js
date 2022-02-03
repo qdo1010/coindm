@@ -11,19 +11,68 @@
     TextStyle = PIXI.TextStyle;
     
     let app = new Application({
-        width: 512,
-        height: 512,
         antialiasing: true,
-        transparent: false,
+        transparent: true,
+        width: 1000,
+        height: 600,
         resolution: 1
       }
    );
-    var baseWidth = Math.floor(window.innerWidth);
-    app.view.style.position = 'relative';
-    app.view.style.left = Math.floor((baseWidth-512)/2)+'px';
-    app.view.style.top = '0px'    
-    document.body.appendChild(app.view);
+  //document.body.appendChild(app.view);
+
+  //var baseWidth = Math.floor(window.innerWidth);
+  //app.renderer.view.style.position = 'relative';
+  //app.view.style.left = Math.floor((baseWidth-512)/2)+'px';
+  //app.renderer.view.style.top = '0px';
+  //app.renderer.view.style.right = '0px';
+  //app.renderer.view.style.bottom = '0px';
+  //app.renderer.view.style.left = '0px';
+
+  //app.view.style.left = Math.floor((baseWidth)/2)-512+'px';
+    //   
+//app.renderer.resize(window.innerWidth, window.innerHeight);
+var gameWindow = document.getElementById("gameWindow");
+gameWindow.appendChild(app.view);
+var size = [1000, 600];
+var ratio = size[0] / size[1];
+
+
+resize()
+function resize() {
+    if (window.innerWidth / window.innerHeight >= ratio) {
+        var w = window.innerHeight * ratio;
+        var h = window.innerHeight;
+    } else {
+        var w = window.innerWidth;
+        var h = window.innerWidth / ratio;
+    }
+    app.renderer.view.style.position = 'absolute';
+    app.renderer.view.style.width = w + 'px';
+    app.renderer.view.style.height = h + 'px';
+    app.renderer.view.style.left = '25%';
+    app.renderer.view.style.top = '20%'; 
+    //app.renderer.view.style.margin = -w/2 + 'px 0 0 ' -h/2 + 'px';    
+}
+window.onresize = resize;
+
+
+//  window.addEventListener("resize", function() {
+      //app.renderer.resize(window.innerWidth, window.innerHeight);
+//      var w = window.innerWidth;
+//      var h = window.innerHeight;
+ //     app.renderer.view.style.position = 'fixed';
+
+ //     app.renderer.view.style.width = w + 'px';
+ //     app.renderer.view.style.height = h + 'px';
+ //     app.renderer.view.style.left = '0px';
+      //app.view.style.top = '0px'; 
+      //app.view.style.bottom = '0px'; 
+  //    app.renderer.view.style.bottom = '0px'; 
+
+ //   });
+
     var flashStage = new PIXI.Container();
+    //var gameScene = new PIXI.Container();
 
     //First, Create a Pixi renderer and stage
    // var renderer = PIXI.autoDetectRenderer(512, 512);
@@ -37,7 +86,8 @@
       update: gameLoop.bind(this),
       fps: 50,
     });
-
+    var EXPLOSION_FRAMES = [];
+    var LIGHTSPEED_FRAMES = [];
     /*
     Here's what those options above mean:
     - `renderingEngine`: the PIXI global object.
@@ -58,15 +108,29 @@
 
     //Load any assets you might need and call the `setup` function when
     //they've finished loading
-      
+
     PIXI.loader
-      .add("images/treasureHunter.json")
-      .add("images/coin.png")
+      .add("images/galaguh.json")
+      .add("images/blue.png")
       .add("images/close.png")
-      .add("images/dungeon2.png")
+      .add("images/bg-control-pad.svg")
+      .add("images/bg-control-angle-indicator.svg")
+      .add("images/spaceship-body.png")
+      .add("images/space-background.svg")
+      .add("images/asteroid.png")
+      .add("images/home.png")
       .load(setup);
-    let state, explorer, treasure, blobs, chimes, exit, player, dungeon,
-    door, healthBar, message,scoreMessage, codeMessage, gameScene, gameOverScene, enemies, id;    //Define any variables used in more than one function
+
+    addExplosionFrames();
+    addLightSpeedFrames();
+    let state, explosion, exit, player,
+    door, healthBar, message,scoreMessage, codeMessage, gameOverScene, enemies, id;    //Define any variables used in more than one function
+    let  hero, aliens, spaceBackground, playerBullets, enemyBullets;
+
+
+    let left = keyboard(65);
+   let right = keyboard(68);
+    let spacebar = keyboard(32);
 
     let textureButton, textureButtonDown, textureButtonOver, button;
 
@@ -86,6 +150,8 @@
 
     var coin;
     var coin2;
+    var radar1;
+    var radar2;
     var firstPick = 1;
     //probality of which side being the right choice
     var leftProb;
@@ -94,7 +160,7 @@
     var rbin;
 
 
-    var trainBinStartTimer = 0;
+    //var trainBinStartTimer = 0;
     var testBinStartTimer = 0;
     var leftBin = [];
     var rightBin = [];
@@ -105,10 +171,32 @@
     var trainPhase;
     var whatPhase = 1;
     var trialCounter;
+    var DestroyedAlienCounter;
 
     //data to send through json
     var cohort; //what training are u gonna get
     var user;
+
+    var highscore;
+    ////////////////////////////
+
+    //button
+    var up,down;
+    var decide = 0;
+    var isRadarSelected1 =0;
+    var isRadarSelected2 =0;
+    //sound
+    var goodsound;
+    var badsound;
+    //var themeso
+    var chosenAlienID = 0;
+
+    var HitMiss = 0;
+    var ExplosionContainer;
+
+    var lightspeed;
+
+
     var reward = '"rw":[';
     var score = '"score":[';
     var choice = '"choice":[';
@@ -119,401 +207,302 @@
     var leftBinRecord = '"lbin":[';
     var rightBinRecord = '"rbin":[';
     var flashtime = '"ft":[';
-    var highscore;
-    ////////////////////////////
 
-    //button
-    var left,right,up,down;
-    var decide = 0;
+    var RT = 0; //reaction 
+    var DT = 0; //decision
+    var ST = 0; //start
 
-    //sound
-    var goodsound;
-    var badsound;
     //The `setup` function will run when the loader has finished loading the image
     function setup() {
       user = Math.random().toString(36).substring(2, 7) + Math.random().toString(36).substring(2, 7);
-      //prompt("Please enter your name", "Name");
-      //console.log(user);
-      //if (user == null || user == "") {
-      //txt = "User cancelled the prompt.";
-      //} else {
-      //txt = "Hello " + user + "! How are you today?";
-      //}
-      var answer = 0;
-      swal("Have you played or seen this game before?", {
-        dangerMode: true,
-        closeOnClickOutside: false,
-      buttons: {
-        No: {
-            text: "No, I have not!",
-            value: "no",
-          },
-        cancel: "Yes, I have",
-        }
-    })
-    .then((value) => {
-      switch (value) {
-        case "no":
-          answer = 0;
-          user = user + '_' + answer
-            swal("Awesome!", "Enjoy the game!", "success");
-            break; 
-        default:
-          answer = 1;
-          user = user + '_' + answer
-            swal("Wow thanks for playing again. Have fun!");
-        }
-    });
-      
-      
+
       goodsound = new sound('coin.mp3');
       badsound = new sound('boo.mp3');
-
+     // themesong = new sound('StarWars.mp3');
       trialCounter = 0;
+      DestroyedAlienCounter = 0;
       app.stage.addChild(flashStage);
       //Create the cat sprite and add it to the stage
-      coin = new PIXI.Sprite(PIXI.loader.resources["images/coin.png"].texture);
-      coin2 = new PIXI.Sprite(PIXI.loader.resources["images/coin.png"].texture);
+
+      radar1 = new PIXI.Sprite(PIXI.loader.resources["images/bg-control-pad.svg"].texture);
+      radar2 = new PIXI.Sprite(PIXI.loader.resources["images/bg-control-pad.svg"].texture);
+
+      radar_a1 = new PIXI.Sprite(PIXI.loader.resources["images/bg-control-angle-indicator.svg"].texture);
+      radar_a2 = new PIXI.Sprite(PIXI.loader.resources["images/bg-control-angle-indicator.svg"].texture);
+
+      coin = new PIXI.Sprite(PIXI.loader.resources["images/blue.png"].texture);
+      coin2 = new PIXI.Sprite(PIXI.loader.resources["images/blue.png"].texture);
       flashStage.addChild(coin);
       flashStage.addChild(coin2);
       //After everything is set up, start Smoothie by calling its `start`
       //method.
+      coin.height=50
+      coin.width=50
+      coin2.height=50
+      coin2.width=50
       coin.visible = 0;
       coin2.visible = 0;
       coin.x = 50;
       coin.y = 150;
       coin2.x = 300;
       coin2.y = 150;
+
+      flashStage.addChild(radar1);
+      flashStage.addChild(radar2);
+      //After everything is set up,
+      //After everything is set up, start Smoothie by calling its `start`
+      //method.
+      radar1.visible = 1;
+
+      radar1.x = 40
+      radar1.y = 150
+      //radar1.width=20
+      //radar1.heigh=900
+      radar2.x = 320
+      radar2.y = 150
+      radar1.interactive=true
+      radar2.interactive=true
+      //radar2.width=20
+      //radar2.heigh=900
+
+      flashStage.visible = 0;
       ///////////////////////////////////////
-      gameScene = new Container();
-      app.stage.addChild(gameScene);
-      id = resources["images/treasureHunter.json"].textures;
+        gameScene = new Container();
+        
+        app.stage.addChild(gameScene);
+        id = resources["images/galaguh.json"].textures;
+        spaceBackground = new Sprite(id["spaceBackground.psd"]);
+        gameScene.addChild(spaceBackground);
 
-      dungeon = new Sprite(id["dungeon.png"]);
-      displacementSprite =  new PIXI.Sprite(PIXI.loader.resources["images/dungeon2.png"].texture);
-      displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
-      //displacementFilter.scale.set(1e4 + Math.random()*100);
-      //displacementSprite.scale.set(0.4 + 0.6*Math.random());
-    // add filter to container & stage (for waves effect on hover)
-      gameScene.addChild(displacementSprite);
-      //gameScene.filters = [displacementFilter];
-      gameScene.addChild(dungeon);
-       
-       for (i = 0; i < 2; i++){
-       doors[i] = new Sprite(id["door.png"]);
-       if (i%2 == 0){
-           doors[i].position.set(gameScene.width/2 - 80, 120);
-       }
-       else{
-           doors[i].position.set(gameScene.width/2 + 80,120);
-       }
-       gameScene.addChild(doors[i]);
-       }
-      
-      //Explorer
-      explorer = new Sprite(id["explorer.png"]);
-      explorer.x = gameScene.width/2;
-      explorer.y = gameScene.height / 2 - explorer.height / 2 - 80;
-      explorer.vx = 0;
-      explorer.vy = 0;
-      gameScene.addChild(explorer);
-      
-      //Treasure
-      treasure = new Sprite(id["treasure.png"]);
-      treasure.x = gameScene.width/2;
-      treasure.y = gameScene.height / 2 - treasure.height - 120;
-      gameScene.addChild(treasure);
-      
-      flashStage.visible = false;
-      
-                             
-    //
-      let scorestyle = new TextStyle({
-        fontFamily: "Futura",
-        fontSize: 30,
-        fill: "white"
+        hero = new Sprite(id["hero.psd"]);
+        hero.anchor.set(0.5);
+        hero.x = gameScene.width/2; //-hero.width;
+        hero.y = app.stage.height;
+        hero.vx = 0;
+        hero.vy = 0;
+        hero.width = 100;
+        hero.height= 100;
+        gameScene.addChild(hero);
+        
+
+        let numOfAliens = 10,
+            speed = 0.5,
+            direction = 1;
+        aliens = [];
+        playerBullets = [];
+        enemyBullets = [];
+        ExplosionContainer = [];
+        for (let i = 0; i < numOfAliens; i++) {
+         // let alien = new Sprite(id["enemy.png"])
+          var alienImg;
+          alienImg = "images/asteroid.png";
+          
+          let alien = new PIXI.Sprite(PIXI.loader.resources[alienImg].texture);
+          alien.width= randomInt(50, 60);
+          alien.height= randomInt(50, 70);
+          alien.anchor.x=0.5;
+          alien.anchor.y =0.5;
+          alien.x = randomInt(0, app.stage.width);
+          alien.y = randomInt(0, app.stage.height - 180 - alien.height);
+          alien.vx = speed * direction;
+          //alien.fire = randomInt(0,120);
+          alien.id = i;
+          direction *= -1;
+          //alien.hitArea = new PIXI.Rectangle(0, 0, alien.width*1.5, alien.height*1.5);
+          alien.on('mouseover', function(event){
+              alien.tint = 0x00ffff;
+          });
+          alien.on('mouseout', function(event){
+              alien.tint = 0xffffff;
+          });
+
+          alien.interactive = true;
+          alien.on('mousedown',function (e){
+            //alien.tint = 0x00ffff;
+            if (coinFlip(0.5)){ //toss coin to see which side will win, L or R
+              leftProb = 0.1;
+              rightProb = 0.9;
+            }
+            else{
+              leftProb = 0.9;
+              rightProb = 0.1;
+            }
+            chosenAlienID = alien.id;
+            testBinStartTimer = performance.now();
+            state = trial_init;
+          });
+
+
+          alien.on('touchstart',function (e){
+            alien.tint = 0x00ffff;
+            if (coinFlip(0.5)){ //toss coin to see which side will win, L or R
+              leftProb = 0.1;
+              rightProb = 0.9;
+            }
+            else{
+              leftProb = 0.9;
+              rightProb = 0.1;
+            }
+            chosenAlienID = alien.id;
+            testBinStartTimer = performance.now();
+
+            state = trial_init;
+          });
+
+          alien.on('touchend',function (e){
+              alien.tint = 0xffffff;
+            });
+          aliens.push(alien);
+          gameScene.addChild(alien);
+        }
+        
+        healthBar = new Container();
+        healthBar.position.set(4, hero.y);
+        gameScene.addChild(healthBar);
+        var home;
+        homeImg = "images/home.png";
+          
+        //home = new PIXI.Sprite(PIXI.loader.resources[homeImg].texture);
+        //home.width= 100;
+        //home.height= 100;
+        //home.x = 104;
+        //home.y = 4;
+        //healthBar.addChild(home);
+        let innerBar = new Graphics();
+        innerBar.beginFill(0x263e49);
+        innerBar.drawRect(0, 0, 5, 20);
+        innerBar.endFill();
+        healthBar.addChild(innerBar);
+
+        let outerBar = new Graphics();
+        outerBar.beginFill(0x66CCFF);
+        outerBar.drawRect(0, 0, 5, 20);
+        outerBar.endFill();
+        healthBar.addChild(outerBar);
+        healthBar.outer = outerBar;
+
+        gameOverScene = new Container();
+        app.stage.addChild(gameOverScene);
+
+        gameOverScene.visible = false;
+
+        let style = new TextStyle({
+          fontFamily: "Josefin Sans",
+          fontSize: 40,
+          fill: "white",
         });
-       scoreMessage = new Text("0", scorestyle);
-       scoreMessage.x = app.stage.width/2;
-       scoreMessage.y = app.stage.height  - 470;
-       gameScene.addChild(scoreMessage);
-      let scorestyle2 = new TextStyle({
-        fontFamily: "Futura",
-        fontSize: 30,
-        fill: "red"
-        });
-       targetScore = new Text("High Score", scorestyle2);
-       targetScore.x = app.stage.width/2;
-       targetScore.y = app.stage.height  - 90;
-       gameScene.addChild(targetScore);
-       targetScore.visible = 1;
-      //Create Play Button
-      // create some textures from an image path
-      //quitButton = new PIXI.Sprite(PIXI.loader.resources["images/close.png"].texture);
-      //quitButton.buttonMode = true;
 
-     // quitButton.anchor.set(0.5);
-     // quitButton.x = 100;
-     // quitButton.y = 480;
+        scoreMessage = new Text("0", style);
+        scoreMessage.x = 10;
+        scoreMessage.y = hero.y;
+        scoreMessage.text = "0";
+        scoreMessage.visible=1;
+        gameScene.addChild(scoreMessage);
 
-          // make the button interactive...
-     // quitButton.interactive = false;
-     // quitButton.buttonMode = false;
-     // quitButton.visible = 0
+        //message = new Text("The End!", style);
+        //message.anchor.set(0.5);
+        //message.x = app.stage.width / 2;
+        //message.y = app.stage.height / 2 - 32;
 
-     // quitButton
-              // Mouse & touch events are normalized into
-              // the pointer* events for handling different
-              // button events.
-       //       .on('pointerdown', onQuitDown);
+        //gameOverScene.addChild(message);
+        globalScoreMessage = new Text("High Score", style);
+        globalScoreMessage.x = app.stage.width/3;
+        globalScoreMessage.y = app.stage.height  - 100;
+        gameOverScene.addChild(globalScoreMessage);
 
-              // Use mouse-only events
-              // .on('mousedown', onButtonDown)
-              // .on('mouseup', onButtonUp)
-              // .on('mouseupoutside', onButtonUp)
-              // .on('mouseover', onButtonOver)
-              // .on('mouseout', onButtonOut)
+        yourScoreMessage = new Text("Your Score", style);
+        yourScoreMessage.x = app.stage.width/3;
+        yourScoreMessage.y = app.stage.height  - 150;
+        gameOverScene.addChild(yourScoreMessage);
 
-              // Use touch-only events
-              // .on('touchstart', onButtonDown)
-              // .on('touchend', onButtonUp)
-              // .on('touchendoutside', onButtonUp)
+        spacebar.press = function() {
+          if (playerBullets.length < 1){
+            let rectangle = new Graphics();
+            rectangle.beginFill(0x66CCFF);
+            rectangle.drawRect(0, 0, 5, 50);
+            rectangle.endFill();
+            rectangle.x = hero.x - rectangle.width/2;
+            rectangle.y = hero.y -rectangle.height/2;
+            gameScene.addChild(rectangle);
+            playerBullets.push(rectangle);
+            HitMiss=0;
+          }
+        };
 
-          // add it to the stage
-     // gameScene.addChild(quitButton);
+        radar1.on('mousedown',function (e){
+        isRadarSelected1=1;
+        if (playerBullets.length < 1){
+            let rectangle = new Graphics();
+            rectangle.beginFill(0x66CCFF);
+            rectangle.drawRect(0, 0, 5, 25);
+            rectangle.endFill();
+            rectangle.x = hero.x - rectangle.width/2;
+            rectangle.y = hero.y -rectangle.height/2;
+            gameScene.addChild(rectangle);
+            playerBullets.push(rectangle);
+          }
+      });
 
+      radar2.on('mousedown',function (e){
+        isRadarSelected2=1;
+        if (playerBullets.length < 1){
+            let rectangle = new Graphics();
+            rectangle.beginFill(0x66CCFF);
+            rectangle.drawRect(0, 0, 5, 25);
+            rectangle.endFill();
+            rectangle.x = hero.x - rectangle.width/2;
+            rectangle.y = hero.y -rectangle.height/2;
+            gameScene.addChild(rectangle);
+            playerBullets.push(rectangle);
+          }
+      });
 
-     //Create the health bar
-      healthBar = new Container();
-      healthBar.position.set(app.stage.width/2 - 80, 20)
-      gameScene.addChild(healthBar);
+      radar1.on('touchstart',function (e){
+        isRadarSelected1=1;
+        if (playerBullets.length < 1){
+            let rectangle = new Graphics();
+            rectangle.beginFill(0x66CCFF);
+            rectangle.drawRect(0, 0, 5, 25);
+            rectangle.endFill();
+            rectangle.x = hero.x - rectangle.width/2;
+            rectangle.y = hero.y -rectangle.height/2;
+            gameScene.addChild(rectangle);
+            playerBullets.push(rectangle);
+          }
+      });
 
-      //Create the black background rectangle
-      let innerBar = new Graphics();
-      innerBar.beginFill(0x000000);
-      innerBar.drawRect(0, 0, 200, 8);
-      innerBar.endFill();
-      healthBar.addChild(innerBar);
+      radar2.on('touchstart',function (e){
+        isRadarSelected2=1;
+        if (playerBullets.length < 1){
+            let rectangle = new Graphics();
+            rectangle.beginFill(0x66CCFF);
+            rectangle.drawRect(0, 0, 5, 25);
+            rectangle.endFill();
+            rectangle.x = hero.x - rectangle.width/2;
+            rectangle.y = hero.y -rectangle.height/2;
+            gameScene.addChild(rectangle);
+            playerBullets.push(rectangle);
+          }
+      });
+        left.press = function() {
+          hero.vx = -4;
+          hero.vy = 0;
+        };
 
-      //Create the front red rectangle
-      let outerBar = new Graphics();
-      outerBar.beginFill(0xFF3300);
-      outerBar.drawRect(0, 0, 200, 8);
-      outerBar.endFill();
-      healthBar.addChild(outerBar);
+        right.press = function() {
+          hero.vx = 4;
+          hero.vy = 0;
+        };
 
-      healthBar.outer = outerBar;
-      healthBar.outer.width = 0;
 
     //Create the `gameOver` scene
-      gameOverScene = new Container();
-      app.stage.addChild(gameOverScene);
-
-      //Create Play Button
-      // create some textures from an image path
-      textureButton = PIXI.Texture.fromImage('https://dl.dropboxusercontent.com/s/mi2cibdajml8qj9/arrow_wait.png?dl=0');
-      textureButtonDown = PIXI.Texture.fromImage('https://dl.dropboxusercontent.com/s/m0x11c91wazehyp/arrow_error.png?dl=0');
-      textureButtonOver = PIXI.Texture.fromImage('https://dl.dropboxusercontent.com/s/1kuhddt8p9tr0k8/arrow_wait.png?dl=0');
-
-      button = new PIXI.Sprite(textureButton);
-      button.buttonMode = true;
-
-      button.anchor.set(0.5);
-      button.x = 250;
-      button.y = 200;
-
-          // make the button interactive...
-      button.interactive = true;
-      button.buttonMode = true;
-
-      button
-              // Mouse & touch events are normalized into
-              // the pointer* events for handling different
-              // button events.
-              .on('pointerdown', onButtonDown)
-              .on('pointerup', onButtonUp)
-              .on('pointerupoutside', onButtonUp)
-              .on('pointerover', onButtonOver)
-              .on('pointerout', onButtonOut);
-
-              // Use mouse-only events
-              // .on('mousedown', onButtonDown)
-              // .on('mouseup', onButtonUp)
-              // .on('mouseupoutside', onButtonUp)
-              // .on('mouseover', onButtonOver)
-              // .on('mouseout', onButtonOut)
-
-              // Use touch-only events
-              // .on('touchstart', onButtonDown)
-              // .on('touchend', onButtonUp)
-              // .on('touchendoutside', onButtonUp)
-
-          // add it to the stage
-      gameOverScene.addChild(button);
-
-
-       globalScoreMessage = new Text("High Score", scorestyle);
-       globalScoreMessage.x = app.stage.width/3;
-       globalScoreMessage.y = app.stage.height  - 100;
-       gameOverScene.addChild(globalScoreMessage);
-
-       yourScoreMessage = new Text("Your Score", scorestyle);
-       yourScoreMessage.x = app.stage.width/3;
-       yourScoreMessage.y = app.stage.height  - 150;
-       gameOverScene.addChild(yourScoreMessage);
-      // let blurs = new PIXI.filters.BlurFilter();
-
-      // blurs.blur = 0;
-      // TweenLite.to(blurs, 1.5, {blur:10, onComplete:blurin, ease: Power2.easeIn});
-      // var blurin = function(){
-      //   TweenLite.to(blurs, 1, {blur:0});
-      // }
-     // gameOverScene.addChild(button)
-      //Make the `gameOver` scene invisible when the game first starts
-      gameOverScene.visible = false;
-
-      //Create the text sprite and add it to the `gameOver` scene
-      let style = new TextStyle({
-        fontFamily: "Futura",
-        fontSize: 30,
-        fill: "white"
-      });
-      
-      
-      message = new Text("The End!", style);
-      message.x = 180;
-      message.y = app.stage.height / 2 - 50;
-
-      codeMessage = new Text("Code", style);
-      codeMessage.x = 20;
-      codeMessage.y = app.stage.height / 2 + 10 ;
-      gameOverScene.addChild(message);
-
-      gameOverScene.addChild(codeMessage);
-
-
-
-      ///Control
-      //Capture the keyboard arrow keys
-      left = keyboard(37);
-      up = keyboard(38);
-      right = keyboard(39);
-      down = keyboard(40);
-       //Left arrow key `press` method
-       left.press = function() {
-
-         //Change the explorer's velocity when the key is pressed
-         explorer.vx = -5;
-         explorer.vy = 0;
-       };
-
-       //Left arrow key `release` method
-       left.release = function() {
-
-         //If the left arrow has been released, and the right arrow isn't down,
-         //and the explorer isn't moving vertically:
-         //Stop the explorer
-         if (!right.isDown && explorer.vy === 0) {
-           explorer.vx = 0;
-         }
-       };
-
-       //Up
-       up.press = function() {
-         explorer.vy = -5;
-         explorer.vx = 0;
-       };
-       up.release = function() {
-         if (!down.isDown && explorer.vx === 0) {
-           explorer.vy = 0;
-         }
-       };
-
-       //Right
-       right.press = function() {
-         explorer.vx = 5;
-         explorer.vy = 0;
-       };
-       right.release = function() {
-         if (!left.isDown && explorer.vy === 0) {
-           explorer.vx = 0;
-         }
-       };
-
-       //Down
-       down.press = function() {
-         explorer.vy = 5;
-         explorer.vx = 0;
-       };
-       down.release = function() {
-         if (!up.isDown && explorer.vx === 0) {
-           explorer.vy = 0;
-         }
-       };
-      trainPhase = [1,1,1,1,1,1,1,1,1,1,0]; //10-0
+      //state = play;
+      //app.ticker.add(delta => gameLoop(delta));
       state = getHC;
-      //state = getCohort;
       smoothie.start();
     }
 
-    function getHC(){
-      var params = 'lim=1';
-      var url =  '/eviaco'; //
-     // var url = 'https://coindm.herokuapp.com/eviaco';
-      var xhr = createCORSRequest('GET', url + "?" + params);
-      if (!xhr) {
-         throw new Error('CORS not supported');
-      }
-      // xhr.open("POST", myUrl, true);
-     //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
-      xhr.onload = function() {
-       var text = xhr.responseText;
-       var obj = JSON.parse(text);
-      // console.log(obj);
-      // console.log(obj.msg[0].hc);
-       targetScore.text = obj.msg[0].hc.toString();
-       targetScore.visible = 1;
-      }
-      xhr.send(null);
-      state = getCohort;
-    }
 
-    function getCohort(){
-      var params = 'lim=1';
-      var url =  '/eviaco';
-      //var url = 'https://coindm.herokuapp.com/eviaco';
-
-      var xhr = createCORSRequest('GET', url + "?" + params);
-      if (!xhr) {
-           throw new Error('CORS not supported');
-      }
-      // xhr.open("POST", myUrl, true);
-       //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
-      xhr.onload = function(){ 
-        if (xhr.readyState === xhr.DONE) {
-          if (xhr.status === 200) {
-            //console.log("connected");
-            //console.log(xhr.responseText);
-            //var text = xhr.responseText;
-            //var obj = JSON.parse(text);
-            //cohort = (obj.msg.length)%2;
-            if (coinFlip(0.5)){
-              trainPhase = [1,1,1,1,1,1,1,1,1,1,0]; //10-0
-              cohort = 0;
-            }
-            else {
-              trainPhase = [2,1,1,2,1,1,2,2,1,2,0]; //10-0, 9-1
-              cohort = 1;
-            }
-
-           // state = play;
-          }
-        }
-      }
- 
-      xhr.send(null);
-      state = play;
-    }
     //All your game or application logic goes in this `update` function
     //that you've supplied to Smoothie when you instantiated it above. Smoothie will run this
     //`update` function in loop at
@@ -526,12 +515,6 @@
 
     var lflash = 0;
     var rflash = 0;
-    
-
-    var RT = 0; //reaction 
-    var DT = 0; //decision
-    var ST = 0; //start
-
 
 
     function coinFlip(prob) {
@@ -542,354 +525,206 @@
      //Update the current game state:
      state(delta);
     }
-
     //play loop
     function play(delta){
+      //
+        isRadarSelected1=0;
+        isRadarSelected2=0
         gameScene.visible= true;
         gameScene.alpha = 1;
         flashStage.visible = false;
         gameOverScene.visible = false;
 
-        //use the explorer's velocity to make it move
-        explorer.x += explorer.vx;
-        explorer.y += explorer.vy;
-        
-        //Contain the explorer inside the area of the dungeon
-        contain(explorer, {x: 28, y: 10, width: 488, height: 480});
-         //contain(explorer, stage);
-         
-         //Set `explorerHit` to `false` before checking for a collision
-        let explorerHit = false;
+        hero.x += hero.vx*smoothie.dt;
 
-        if (hitTestRectangle(explorer, treasure)) {
-          //If the treasure is touching the explorer, center it over the explorer
-          treasure.x = explorer.x + 8;
-          treasure.y = explorer.y + 8;
-          if (firstPick){  //BEGIN FLASH STATE
-              ST = performance.now(); //FIRST TIME TOUCH THE TREASURE
-              if (whatPhase == 1){ //if deterministic training phase
-              //50-50 chance of it being either left or right for training
-                  leftProb = coinFlip(0.5);
-                  rightProb = 1 - leftProb;
 
-                  var num_a;
-                  var num_b;
-                  //number of flash on each side
-                  switch(trainPhase[trialCounter]) {
-                      case 1: //a vs b
-                        // code block
-                        num_a = 0;
-                        num_b = 10;
-                        break;
-                      case 2: //a vs b
-                        // code block
-                        num_a = 1;
-                        num_b = 9;
-                        break;
-                      case 3: //a vs b
-                        // code block
-                        num_a = 2;
-                        num_b = 8;
-                        break;
-                  }
-                  //pick 1 bins where u flash one side, and not the other
-                  var bin1 = []; //1 random bin index
-                  while(bin1.length < num_a){
-                    var r = Math.floor(Math.random() * 10) + 1;
-                    if(bin1.indexOf(r) === -1) bin1.push(r); //if value of r does not exist in bin, then we add it to the array!
-                  }
-                  //console.log(bin1)
-                  var bin2 = []; //9 random bin
-                  while(bin2.length < num_b){ //this makes it so that it has to fill the bin with all different bin number?
-                    var r = Math.floor(Math.random() * 10) + 1;
-                    if(bin2.indexOf(r) === -1) bin2.push(r);
-                  }
-                  //console.log(bin2)
-                  if (leftProb > rightProb){
-                    lbin = bin2;
-                    rbin = bin1;
-                    //lbin > rbin
-                  }
-                  else{
-                    lbin = bin1;
-                    rbin = bin2; 
-                    //lbin < rbin
-                  }
-                  //start timer to see when flashes happen
-                  trainBinStartTimer = performance.now();
-                  state = train_flash;
+        contain(hero, {x: 28, y: 10, width: 480, height: 480});
+        let heroHit = false;
+        aliens.forEach(function(alien) {
+            alien.x += Math.random()*alien.vx*smoothie.dt;
+            alien.x -= Math.random()*alien.vx*smoothie.dt;
+
+            //alien.fire += delta;
+            //if (alien.fire > 120)
+            //{
+            //  let rectangle = new Graphics();
+            //  rectangle.beginFill(0xd11427);
+            //  rectangle.drawRect(0, 0, 5, 6);
+            //  rectangle.endFill();
+            //  rectangle.x = alien.x + alien.width/2 - rectangle.width/2;
+           //  rectangle.y = alien.y + alien.height - rectangle.height/2;
+            //  gameScene.addChild(rectangle);
+            //  alien.fire = 0;
+            //  enemyBullets.push(rectangle);
+            //}
+
+            let alienBounded = contain(alien, {x: 28, y: 10, width: 480, height: 480});
+            if (alienBounded === "left" || alienBounded === "right") {
+              alien.vx *= -1;
+            }
+          });
+          // check if bullet hits player
+          //enemyBullets.forEach((bullet)=>{
+          //  if(hitTestRectangle(hero, bullet)) {
+          //    heroHit = true;
+          //  }
+          //});
+          // player slows to stop on keyup
+          if (left.isUp && right.isUp){
+            hero.vx *= 0.97*smoothie.dt;
+          }
+
+
+          playerBullets.forEach((playerBullet)=> {
+
+            var toPlayerX = aliens[chosenAlienID].position.x - playerBullet.x;
+            var toPlayerY = aliens[chosenAlienID].position.y - playerBullet.y;
+
+            // Normalize
+            var toPlayerLength = Math.sqrt(toPlayerX * toPlayerX + toPlayerY * toPlayerY);
+            toPlayerX = toPlayerX / toPlayerLength;
+            toPlayerY = toPlayerY / toPlayerLength;
+
+            // Move towards the player
+            playerBullet.x += toPlayerX * 20;
+            playerBullet.y += toPlayerY * 20;
+
+            // Rotate us to face the player
+            var herotoAlienX = aliens[chosenAlienID].position.x - hero.x;
+            var herotoAlienY = aliens[chosenAlienID].position.y - hero.y;
+            hero.rotation = Math.PI/2  + Math.atan2(herotoAlienY, herotoAlienX);
+
+            playerBullet.rotation =  Math.atan2(toPlayerY, toPlayerX) - Math.PI/2;
+
+            // check if bullet is out of bounds
+            if (Math.sqrt(toPlayerY*toPlayerY+toPlayerX*toPlayerX) <= 0.8){
+              playerBullets.splice(playerBullets.indexOf(playerBullet), 1);
+              gameScene.removeChild(playerBullet);
+            }
+            if (hitTestRectangle(aliens[chosenAlienID],playerBullet) && (HitMiss == 1)){
+              aliens[chosenAlienID].visible = false;
+              aliens[chosenAlienID].interactive = false;
+              explosion = new PIXI.extras.MovieClip( EXPLOSION_FRAMES.map( PIXI.Texture.fromImage ) );
+              explosion.anchor.x = 0.5;
+              explosion.anchor.y = 0.5;
+              explosion.loop = false;
+              gameScene.addChild(explosion);
+              explosion.position.x = aliens[chosenAlienID].position.x;
+              explosion.position.y = aliens[chosenAlienID].position.y;
+              explosion.play();
+              ExplosionContainer.push(explosion);
+              //playerBullets.splice(playerBullets.indexOf(playerBullet), 1);
+              gameScene.removeChild(aliens[chosenAlienID]);  
+              DestroyedAlienCounter += 1;
+              //console.log(DestroyedAlienCounter);
+              //gameScene.removeChild(explosion);
+              playerBullets.splice(playerBullets.indexOf(playerBullet), 1);
+              gameScene.removeChild(playerBullet);  
+              healthBar.outer.width += 1;
+            }
+
+            // check bullet collision on each alien
+            /*aliens.forEach((alien)=>{
+              if(hitTestRectangle(alien, playerBullet) && (HitMiss == 1)) {
+                alien.visible = false;
+                alien.interactive = false;
+                playerBullet.visible = false;
+                gameScene.addChild(explosion);
+                explosion.position.x = alien.position.x;
+                explosion.position.y = alien.position.y;
+                explosion.play();
+                aliens.splice(aliens.indexOf(alien), 1);
+                playerBullets.splice(playerBullets.indexOf(playerBullet), 1);
+                gameScene.removeChild(alien);
+
               }
-              else {
-                    //Probabilistic Testing phase
-                  if (coinFlip(0.5)){
-                  //TRULY RANDOM
-                      if (coinFlip(0.5)){ //toss coin to see which side will win, L or R
-                        leftProb = 0.3;
-                        rightProb = 0.7;
-                      }
-                      else{
-                        leftProb = 0.7;
-                        rightProb = 0.3;
-                      }
-                      //the probability of each side stay the same
-                      testBinStartTimer = performance.now();
-                      state = test_flash;
-                  }
-                  else{ //pre-selected
-                      leftProb = coinFlip(0.5);
-                      rightProb = 1 - leftProb;
+            });*/
+            
+          });
 
-                      var num_a;
-                      var num_b;
 
-                      //number of flash on each side
-                      if (coinFlip(0.75)){
-                        num_a = Math.floor(Math.random() * 9); //0 to 9 flashes
-                        var f_diff = Math.floor(Math.random() * 2) + 1; //diff of 1,2,3 
-                        num_b = num_a + f_diff; //add a + that diff
-                      }
-                      else{
-                        if (coinFlip(0.5)){ //the extreme 9vs 9, 10vs 10, 0vs 1, 1 vs 0, 0 vs 0
-                          var preset = [10,9,8,7];
-                          num_a = preset[Math.floor(Math.random() * preset.length)];
-                          num_b = preset[Math.floor(Math.random() * preset.length)];
-                        }
-                        else{
-                          var preset = [0,1,2,3]; //add 3 if run again
-                          num_a = preset[Math.floor(Math.random() * preset.length)];
-                          num_b = preset[Math.floor(Math.random() * preset.length)];
-                        }
-                        
-                      }
 
-                  
-                      //pick 1 bins where u flash 
-                      var bin1 = []; //1 random bin index
-                      while(bin1.length < num_a){
-                          var r = Math.floor(Math.random() * 10) + 1;
-                          if(bin1.indexOf(r) === -1) bin1.push(r); //if r is not in bin1 already, add r to bin 1
-                          //console.log(bin1);
-                      }
-                  
-                      var bin2 = []; //9 random bin
-                      while(bin2.length < num_b){
-                          var r = Math.floor(Math.random() * 10) + 1;
-                          if(bin2.indexOf(r) === -1) bin2.push(r);
-                         // console.log(bin2);
-                      }
+          //enemyBullets.forEach((enemyBullet) =>{
+          //  enemyBullet.y += 4*delta;
+          //  if (enemyBullet.y < 0){
+          //    enemyBullets.splice(enemyBullets.indexOf(enemyBullet), 1);
+          //    gameScene.removeChild(enemyBullet);
+          //  }
+          //});
 
-                      if (leftProb > rightProb){
-                          lbin = bin2;
-                          rbin = bin1;
-                          //lbin > rbin
-                        }
-                      else{
-                          lbin = bin1;
-                          rbin = bin2; 
-                    //lbin < rbin
-                        }
-                      trainBinStartTimer = performance.now();
-                      state = train_flash; //flashes preselected 
-                  }
-              }
-              
-              firstPick = 0; //no longer first pick
-              decide = 0; //not yet decide
-          }
-          else { //DECISION STATE
-            if ((left.isDown || right.isDown || up.isDown || down.isDown) && (decide == 0)){
-              //any key press at all...
-                RT  = performance.now() - endofBinTime; //reaction time
-              // console.log("decide");
-                decide = 1;
-            }
-          }
-        }
-        
-        if (hitTestRectangle(treasure, doors[0])) { //left door
-            went_right = 0;
-            DT = performance.now() - ST; //decision time
-            if (chosenDoor == 0){
-                    state = rightchoice;
-            }
-            else if (chosenDoor == 1) {
-                    state = wrongchoice;
-            }
-            else {
-                    state = rightchoice;
-            }
 
-        }
-        if (hitTestRectangle(treasure,doors[1])) { //right door
-            went_right = 1;
-            DT = performance.now() - ST; //decision time
-
-            if (chosenDoor == 1){
-                    state = rightchoice;
-            }
-            else if (chosenDoor == 0) {
-                    state = wrongchoice;
-            }
-            else {
-                    state = rightchoice;
-            }
-        }
-        //////////////////////////comment out the training phase//////////////////////////
-        if (whatPhase == 1){
-          if (trialCounter == (trainPhase.length - 1)){
-            whatPhase = 2;
-          }
-        }
-        else {
-          ///////cohort c uncomment to get rule change
-          //if (trialCounter <= 100){
-          //  rule = 0; //first rule: more flashes win
+         // if (healthBar.outer.width < 0) {
+         //   state = end;
+          //  message.text = "GAME OVER";
           //}
-          //else{
-          //  rule = 1; //rule switch
-          //}
-          if (trialCounter == 200){ //200 total
-            gameScene.visible = 0;
-            flashStage.visible = 0;
-            gameOverScene.visible = 1;
-            message.text = "Thank you!";
-            codeMessage.text = "Your Code is " + user.toUpperCase();
+          /*if (ExplosionContainer.length > 1){
+            ExplosionContainer.forEach((explosion)=>{
+                gameScene.removeChild(explosion);
+              });
+            ExplosionContainer = [];
+          }*/
 
-
-            button.interactive = false;
-            button.buttonMode = false;
-            button.visible = false;
-            state = sendData; //ends it all
+          if (DestroyedAlienCounter == aliens.length) {
+            ExplosionContainer.forEach((explosion)=>{
+                gameScene.removeChild(explosion);
+              });
+            aliens = [];
+            
+            DestroyedAlienCounter = 0;
+            transition();
           }
-        }
+
+          if (trialCounter > 12){
+            
+            state = sendData;
+          }
   }
-
-  //training trial
-  function train_flash(delta){
-    gameScene.visible = true;
-    gameScene.alpha = 0.5;
-    flashStage.visible = true;
-    gameOverScene.visible = false;
-     //Use any physics or game logic code here
-    coin.x = 110;
-    coin.y = 150;
-    coin2.x = 310;
-    coin2.y = 150;
-  //flash logic
-    if (binCount % 1 == 0){ //every x bins we have 1 flash
-      if (inBin){ //what to do in this bin
-        if (lflash == 0){
-          if(lbin.includes(binCount+1)){
-            coin.visible = 1;
-            lflash = 1;
-            LeftFlash = LeftFlash + 1;
-            leftBin.push(performance.now()-trainBinStartTimer);
-            }
-          else {
-            coin.visible = 0;
-            lflash = 1; // don't flash anymore? or wait for 20ms? and then flash?
-            }
-          }
-        else{
-            coin.visible = 0;
-            }
-        //have not flashed right yet       
-        if (rflash == 0){
-          if(rbin.includes(binCount+1)){
-            coin2.visible = 1;
-            rflash = 1;
-            RightFlash = RightFlash + 1;
-            rightBin.push(performance.now()-trainBinStartTimer);
-            }
-          else {
-            coin2.visible = 0;
-            rflash = 1; // don't flash anymore? or wait for 20ms? then stop
-            }
-          }
-        else{ //if flashed right already
-            coin2.visible = 0;
-            }
-        } //end of bin
+  function decision(delta){
+    flashStage.visible = true
+    trialCounter = trialCounter + 1;
+    coin.visible=0;
+    coin2.visible=0;
+    radar1.visible=1;
+    radar2.visible=1;
+    if (isRadarSelected1){
+      went_right = 0; //did not go right
+      if (chosenDoor == 0){
+          state = rightchoice;
+      }
       else {
-        coin.visible = 0;
-        coin2.visible = 0;
-      }   
+          state = wrongchoice;
+      }
     }
-
-  // count frame
-    if (frameCount > 13){ // 13 frames total, so a bin is 20*13 = 260ms
-        inBin = 0; //next bin
-        binCount = binCount + 1;
-        frameCount = 0;
-        lflash = 0;
-        rflash = 0;
-        //console.log(binCount);
+    if (isRadarSelected2){
+      went_right = 1;
+      if (chosenDoor == 1){
+          state = rightchoice;
       }
-    else {
-        inBin = 1; //in the same bin
-        frameCount = frameCount + 1;
+      else {
+          state = wrongchoice;
       }
-     
-    if (binCount > 9){ //10 bin 13*260ms = 3s ish
-        binCount = 0;
-        frameCount = 0;
-        lflash = 0;
-        rflash = 0;
-        //console.log(LeftFlash);
-        //console.log(RightFlash);
-        //IF we see 4-6 and 3-7 --> random Reward or random Door
-        if (LeftFlash > RightFlash) { //reward location
-          if (rule == 0){
-              chosenDoor = 0;
-            }
-            else {
-              chosenDoor = 1;
-            }
-        }
-        else if (LeftFlash < RightFlash){
-          if (rule == 0){
-              chosenDoor = 1;
-          }
-          else{
-            chosenDoor = 0;
-          }
-        }
-        else { //equal 
-          chosenDoor = 2;
-        }
-        //LeftFlash = 0;
-       // RightFlash = 0;
-        state = play;
-        coin.visible = 0;
-        coin2.visible = 0;
-        //console.log(leftBin);
-        //console.log(rightBin);
-        leftBinRecord = leftBinRecord + '{"array":' + JSON.stringify(leftBin) + '},';
-        rightBinRecord = rightBinRecord + '{"array":' + JSON.stringify(rightBin) + '},'; 
-        //empty the bin timer
-        leftBin = [];
-        rightBin = [];
-        endofBinTime = performance.now();
-    var FT = (endofBinTime - ST);
-    flashtime = flashtime + '{"iter":' + FT + '},';
-        //console.log(rightBinRecord);
-      }
+    }
   }
-
-
+  
   //Test trial
+  
+  function trial_init(delta) {
+    aliens.forEach((alien)=>{
+      alien.interactive = false;
+    });
+    state = test_flash;
+  }
   function test_flash(delta) {
     gameScene.visible = true;
-    gameScene.alpha = 0.5;
+    gameScene.alpha = 0.1;
     flashStage.visible = true;
     gameOverScene.visible = false;
 
      //Use any physics or game logic code here
-    coin.x = 110;
+    coin.x = 60;
     coin.y = 150;
-    coin2.x = 310;
+    coin2.x = 410;
     coin2.y = 150;
-
     if (binCount % 1 == 0){ //every x bins we have 1 flash
 
       if (inBin){ //what to do in this bin
@@ -915,7 +750,7 @@
             coin2.visible = 1;
             rflash = 1;
             RightFlash = RightFlash + 1;
-            rightBin.push(performance.now() - testBinStartTimer);
+            rightBin.push(performance.now()-testBinStartTimer);
             }
           else {
             coin2.visible = 0;
@@ -944,8 +779,12 @@
       inBin = 1; //in the same bin
       frameCount = frameCount + 1;
     }
-     
-    if (binCount > 9){ //10 bin 13*260ms = 3s ish
+    
+
+
+    //if ((binCount > 9) || (isRadarSelected2) || (isRadarSelected1)){ //10 bin 13*260ms = 3s ish
+    if ( (isRadarSelected2) || (isRadarSelected1)){ //10 bin 13*260ms = 3s ish
+      RT = performance.now() - testBinStartTimer;
       binCount = 0;
       frameCount = 0;
       lflash = 0;
@@ -975,19 +814,16 @@
         }
       //LeftFlash = 0;
       //RightFlash = 0;
-      state = play;
-      coin.visible = 0;
-      coin2.visible = 0;
       leftBinRecord = leftBinRecord + '{"array":' + JSON.stringify(leftBin) + '},';
       rightBinRecord = rightBinRecord + '{"array":' + JSON.stringify(rightBin) + '},'; 
-    //console.log(leftBinRecord);
-      //console.log(rightBinRecord);
-      //reset the bin timer
+      state = decision;
+      //state = play;
+      coin.visible = 0;
+      coin2.visible = 0;
+ 
       leftBin = [];
       rightBin = [];
-      endofBinTime = performance.now();
-    var FT = (endofBinTime - ST);
-    flashtime = flashtime + '{"iter":' + FT + '},';
+
     }
     //You can change Smoothie's `fps` at any time, like this:
     //smoothie.fps = 1; //basically changing duration of flash
@@ -998,24 +834,13 @@
 
 
 function wrongchoice(delta) {
-    healthBar.outer.width += 1;
-    decide = 0; //reset first decision
-    firstPick = 1; //reset first hit
-
-    
-    explorer.x = gameScene.width/2;
-    explorer.y = gameScene.height / 2 - explorer.height / 2 - 80;
-
-    treasure.x = gameScene.width/2;
-    treasure.y = gameScene.height / 2 - treasure.height - 120;
-    trialCounter = trialCounter + 1;
 
     score = score + '{"iter":0},';
 
     numflashleft = numflashleft + '{"iter":' + LeftFlash + '},';
     numflashright = numflashright + '{"iter":' + RightFlash + '},';
     reactiontime = reactiontime + '{"iter":' + RT + '},';
-    choicetime = choicetime + '{"iter":' + DT + '},';
+    //choicetime = choicetime + '{"iter":' + DT + '},';
     
     choice = choice + '{"iter":' + went_right + '},';
 
@@ -1024,187 +849,150 @@ function wrongchoice(delta) {
     //if ((LeftFlash == 10 & RightFlash == 0) || (LeftFlash == 0 & RightFlash == 10) || (LeftFlash == 9 & RightFlash == 1) || (LeftFlash == 1 & RightFlash == 9)){
     totalScore = totalScore;
     reward = reward + '{"iter":0},';
-    //}
-    
-  //////////////unCOMMENT to CHANGE CONDITION: random feedback
-   // 
-      //if(coinFlip(0.5)){ //50% percent
-      //  totalScore = totalScore;
-      //  reward = reward + '{"iter":0},';
-      //}
-      //else { //50% prob reward correctly
-      //  totalScore = totalScore + 100*(trialCounter+1);
-      //  reward = reward + '{"iter":1},';
-      //  goodsound.play();
-      //}
-   // 
-    scoreMessage.text = totalScore.toString();
     //reset
     LeftFlash = 0;
     RightFlash = 0;
+    HitMiss = 0;
+    scoreMessage.text = totalScore.toString();
+    aliens.forEach((alien)=>{
+      alien.interactive = true;
+      alien.tint = 0xffffff;
+    });
+    state = play;
 
-    state = transition;
 }
 
 function rightchoice(delta) {
-    healthBar.outer.width += 1;
-    decide = 0; //reset first decision
-
-    firstPick = 1; //reset first hit
-    
-    explorer.x = gameScene.width/2;
-    explorer.y = gameScene.height / 2 - explorer.height / 2 - 80;
-    treasure.x = gameScene.width/2;
-    treasure.y = gameScene.height / 2 - treasure.height - 120;
-
 
   //////////////unCOMMENT to CHANGE CONDITION
     //if ((LeftFlash == 10 & RightFlash == 0) || (LeftFlash == 0 & RightFlash == 10) || (LeftFlash == 9 & RightFlash == 1) || (LeftFlash == 1 & RightFlash == 9)){
+    
     totalScore = totalScore + 100*(trialCounter+1);
     reward = reward + '{"iter":1},';
-    goodsound.play();
-    //}
-    // else { //50% prob reward correctly
-    //   if(coinFlip(0.5)){
-    //    totalScore = totalScore;
-    //    reward = reward + '{"iter":0},';
-    //  }
-    //  else {
-    //    totalScore = totalScore +100*(trialCounter+1);
-    //    reward = reward + '{"iter":1},';
-    //    goodsound.play();
-    //  }
-   //}
-    
-
-    scoreMessage.text = totalScore.toString();
-    trialCounter = trialCounter + 1;
 
     score = score + '{"iter":1},';
     numflashleft = numflashleft + '{"iter":' + LeftFlash + '},';
     numflashright = numflashright + '{"iter":' + RightFlash + '},';
     reactiontime = reactiontime + '{"iter":' + RT + '},';
-    choicetime = choicetime + '{"iter":' + DT + '},';
+    //choicetime = choicetime + '{"iter":' + DT + '},';
 
     choice = choice + '{"iter":' + went_right + '},';
+
+
+    goodsound.play();
     //reset
     LeftFlash = 0;
     RightFlash = 0;
+    HitMiss=1;
+    scoreMessage.text = totalScore.toString();
+    aliens.forEach((alien)=>{
+      alien.interactive = true;
+      alien.tint = 0xffffff;
+    });
 
-    state = transition;
+    
+    
+    state = play;
+
 }
+
+
+
+function nextLevel(){
+
+    lightspeed.play();
+    lightspeed.onComplete = function(){
+      gameScene.removeChild(lightspeed);
+      let numOfAliens = randomInt(10, 15);
+      speed = 0.5,
+      direction = 1;
+      aliens = [];
+      playerBullets = [];
+      ExplosionContainer = [];
+      DestroyedAlienCounter = 0; //reset alien counter to 0
+      for (let i = 0; i < numOfAliens; i++) {
+           // let alien = new Sprite(id["enemy.png"])
+            var alienImg;
+            alienImg = "images/asteroid.png";
+            
+            let alien = new PIXI.Sprite(PIXI.loader.resources[alienImg].texture);
+            alien.width= randomInt(50, 60);
+            alien.height= randomInt(50, 70);
+            alien.anchor.x=0.5;
+            alien.anchor.y =0.5;
+            alien.x = randomInt(0, app.stage.width);
+            alien.y = randomInt(0, app.stage.height - 180 - alien.height);
+            alien.vx = speed * direction;
+            //alien.fire = randomInt(0,120);
+            alien.id = i;
+            direction *= -1;
+            alien.interactive = true;
+            //alien.hitArea = new PIXI.Rectangle(0, 0, alien.width*1.5, alien.height*1.5);
+            alien.on('mouseover', function(event){
+                alien.tint = 0x00ffff;
+            });
+            alien.on('mouseout', function(event){
+                alien.tint = 0xffffff;
+            });
+
+            
+            alien.on('mousedown',function (e){
+              //alien.tint = 0x00ffff;
+              if (coinFlip(0.5)){ //toss coin to see which side will win, L or R
+                leftProb = 0.3;
+                rightProb = 0.7;
+              }
+              else{
+                leftProb = 0.7;
+                rightProb = 0.3;
+              }
+              chosenAlienID = alien.id;
+              testBinStartTimer = performance.now();
+              state = trial_init;
+            });
+            alien.on('touchstart',function (e){
+              alien.tint = 0x00ffff;
+              if (coinFlip(0.5)){ //toss coin to see which side will win, L or R
+                leftProb = 0.3;
+                rightProb = 0.7;
+              }
+              else{
+                leftProb = 0.7;
+                rightProb = 0.3;
+              }
+              chosenAlienID = alien.id;
+              testBinStartTimer = performance.now();
+              state = trial_init;
+            });
+
+            alien.on('touchend',function (e){
+              alien.tint = 0xffffff;
+            });
+      aliens.push(alien);
+      gameScene.addChild(alien);
+      }
+      state = play; 
+
+    };    
+}
+
 
 function transition(){
-  const that = this;
-  let tl = new TimelineMax({onComplete:function() {that.animated = true;}});
-  tl.to(displacementFilter.scale,1,{x:1,y:1}); 
-  displacementFilter.scale.set(50);
-  //displacementSprite.scale.set(10); 
-  gameScene.filters = [displacementFilter];
-  state = play;
+  lightspeed = new PIXI.extras.MovieClip( LIGHTSPEED_FRAMES.map( PIXI.Texture.fromImage ) );
+  lightspeed.anchor.x = 0.5;
+  lightspeed.anchor.y = 0;
+  lightspeed.loop = false;
+  lightspeed.animationSpeed = 0.3; 
+  lightspeed.position.x = hero.x;
+  lightspeed.position.y = 0; 
+  lightspeed.height = gameScene.height; 
+  //lightspeed.width =gameScene.width;
+  gameScene.addChild(lightspeed);
+  state = nextLevel;
 }
 
 
-function sendData(){
-  //remove ,
-    score = score.substring(0,score.length - 1) + ']';
-    reward = reward.substring(0,reward.length - 1) + ']';
-    numflashleft = numflashleft.substring(0,numflashleft.length - 1) + ']';
-    numflashright = numflashright.substring(0,numflashright.length - 1) + ']';
-    reactiontime = reactiontime.substring(0,reactiontime.length - 1) + ']';
-    choicetime = choicetime.substring(0,choicetime.length - 1) + ']';
-    choice = choice.substring(0,choice.length - 1) + ']';
-    leftBinRecord = leftBinRecord.substring(0,leftBinRecord.length - 1) + ']';
-    rightBinRecord = rightBinRecord.substring(0,rightBinRecord.length - 1) + ']';
-    flashtime = flashtime.substring(0,flashtime.length - 1) + ']';
-
-  //create json
-    var text = '{"username":' + '"' + user + '_cohort' + cohort.toString() +'"' + ',' +  '"hc":' +  totalScore  + ',' + score + ','  + reward + ',' +numflashleft + ',' + numflashright + ',' + reactiontime + ',' + choice + ',' + choicetime + ',' + leftBinRecord + ',' + rightBinRecord + ',' + flashtime + '}';
-
-    var jsondata = JSON.parse(text);
-    //console.log(jsondata);
-    var data = JSON.stringify(jsondata);
-    var url = '/eviaco';
-    var xhr = createCORSRequest('POST', url);
-       if (!xhr) {
-         throw new Error('CORS not supported');
-       }
-    // xhr.open("POST", myUrl, true);
-     //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
-
-     xhr.setRequestHeader('Content-Type', 'application/json');
-     
-     xhr.onload = function() {
-       var text = xhr.responseText;
-       //console.log(text);
-    //   var title = getTitle(text);
-    //   alert('Response from CORS request to ' + url + ': ' + title);
-     };
-
-     xhr.onerror = function() {
-       alert('Woops, there was an error making the request.');
-     };
-     xhr.send(data);
-
-//     totalScore = 0;
-     scoreMessage.text = totalScore.toString(); 
-
-     state = getHighScore;
-}
-
-function getHighScore(){
-
- //get High Score
-    var params = 'lim=1';
-    var url = '/eviaco';
-    var xhr = createCORSRequest('GET', url + "?" + params);
-    if (!xhr) {
-         throw new Error('CORS not supported');
-    }
-    // xhr.open("POST", myUrl, true);
-     //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
-    xhr.onload = function() {
-       var text = xhr.responseText;
-       var obj = JSON.parse(text);
-      // console.log(obj);
-      // console.log(obj.msg[0].hc);
-       globalScoreMessage.text = "High Score " + obj.msg[0].hc.toString();
-       targetScore.text = obj.msg[0].hc.toString();
-       targetScore.visible = 1;
-       yourScoreMessage.text = "Your Score " + totalScore.toString();
-    //   var title = getTitle(text);
-    //   alert('Response from CORS request to ' + url + ': ' + title);
-    }
-    xhr.send(null);
-    state = end;
-}
-var displaycode = 0;                        
-function end(){
-    gameOverScene.visible = true;
-    gameScene.visible = false;
-    flashStage.visible = false;
-    coin.visible = 0;
-    coin2.visible = 0;
-
-    //reset JSON string
-    score = '"score":[';
-    reward = '"rw":[';
-    numflashleft = '"lflash":[';
-    numflashright = '"rflash":['; 
-    reactiontime = '"rt":[';
-    choicetime = '"ct":[';
-    choice = '"choice":[';
-    flashtime = '"ft":[';
-    leftBinRecord = '"lbin":[';
-    rightBinRecord = '"rbin":[';
-    if (displaycode == 0){
-      var codetxt = String(user.toUpperCase())
-      swal({title: "This is your code for MechTurk Survey",
-        text: codetxt,
-        width: '200px',});
-      displaycode = 1;
-    }
-}
+//CHECK TO SEE IF YOU HAVE A MECHTURK SURVEY READY
 
 
 /* Helper functions */
@@ -1230,7 +1018,7 @@ function onButtonDown() {
 
     trialCounter = 0;
     totalScore = 0;
-    scoreMessage.text = totalScore.toString();
+  //scoreMessage.text = totalScore.toString();
   //  startTime = performance.now() //reset startTimer for next phase
   //  prevDuration = 0;
     state = play;
@@ -1278,133 +1066,208 @@ function sound(src) {
   }
 }
 
+var displaycode = 0;
+function end() {
+  //gameScene.visible = false;
+  //gameOverScene.visible = true;
+
+    gameOverScene.visible = true;
+    gameScene.visible = false;
+    flashStage.visible = false;
+    coin.visible = 0;
+    coin2.visible = 0;
+
+    //reset JSON string
+    score = '"score":[';
+    reward = '"rw":[';
+    numflashleft = '"lflash":[';
+    numflashright = '"rflash":['; 
+    reactiontime = '"rt":[';
+    choicetime = '"ct":[';
+    choice = '"choice":[';
+    flashtime = '"ft":[';
+    leftBinRecord = '"lbin":[';
+    rightBinRecord = '"rbin":[';
+    if (displaycode == 0){
+      var codetxt = String(user.toUpperCase())
+      swal({title: "This is your code for MechTurk Survey",
+        text: codetxt,
+        width: '200px',});
+      displaycode = 1;
+    }
+}
+
 function contain(sprite, container) {
-
-    let collision = undefined;
-
-    //Left
-    if (sprite.x < container.x) {
-      sprite.x = container.x;
-      collision = "left";
-    }
-
-    //Top
-    if (sprite.y < container.y) {
-      sprite.y = container.y;
-      collision = "top";
-    }
-
-    //Right
-    if (sprite.x + sprite.width > container.width) {
-      sprite.x = container.width - sprite.width;
-      collision = "right";
-    }
-
-    //Bottom
-    if (sprite.y + sprite.height > container.height) {
-      sprite.y = container.height - sprite.height;
-      collision = "bottom";
-    }
-
-    //Return the `collision` value
-    return collision;
+  let collision = undefined;
+  if (sprite.x < container.x) {
+    sprite.x = container.x;
+    collision = "left";
   }
-
-  //The `hitTestRectangle` function
+  if (sprite.y < container.y) {
+    sprite.y = container.y;
+    collision = "top";
+  }
+  if (sprite.x + sprite.width > container.width) {
+    sprite.x = container.width - sprite.width;
+    collision = "right";
+  }
+  if (sprite.y + sprite.height > container.height) {
+    sprite.y = container.height - sprite.height;
+    collision = "bottom";
+  }
+  return collision;
+}
 function hitTestRectangle(r1, r2) {
-
-    //Define the variables we'll need to calculate
-    let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
-
-    //hit will determine whether there's a collision
-    hit = false;
-
-    //Find the center points of each sprite
-    r1.centerX = r1.x + r1.width / 2;
-    r1.centerY = r1.y + r1.height / 2;
-    r2.centerX = r2.x + r2.width / 2;
-    r2.centerY = r2.y + r2.height / 2;
-
-    //Find the half-widths and half-heights of each sprite
-    r1.halfWidth = r1.width / 2;
-    r1.halfHeight = r1.height / 2;
-    r2.halfWidth = r2.width / 2;
-    r2.halfHeight = r2.height / 2;
-
-    //Calculate the distance vector between the sprites
-    vx = r1.centerX - r2.centerX;
-    vy = r1.centerY - r2.centerY;
-
-    //Figure out the combined half-widths and half-heights
-    combinedHalfWidths = r1.halfWidth + r2.halfWidth;
-    combinedHalfHeights = r1.halfHeight + r2.halfHeight;
-
-    //Check for a collision on the x axis
-    if (Math.abs(vx) < combinedHalfWidths) {
-
-      //A collision might be occurring. Check for a collision on the y axis
-      if (Math.abs(vy) < combinedHalfHeights) {
-
-        //There's definitely a collision happening
-        hit = true;
-      } else {
-
-        //There's no collision on the y axis
-        hit = false;
-      }
+  let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+  hit = false;
+  r1.centerX = r1.x + r1.width / 2;
+  r1.centerY = r1.y + r1.height / 2;
+  r2.centerX = r2.x + r2.width / 2;
+  r2.centerY = r2.y + r2.height / 2;
+  r1.halfWidth = r1.width / 2;
+  r1.halfHeight = r1.height / 2;
+  r2.halfWidth = r2.width / 2;
+  r2.halfHeight = r2.height / 2;
+  vx = r1.centerX - r2.centerX;
+  vy = r1.centerY - r2.centerY;
+  combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+  combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+  if (Math.abs(vx) < combinedHalfWidths) {
+    if (Math.abs(vy) < combinedHalfHeights) {
+      hit = true;
     } else {
-
-      //There's no collision on the x axis
       hit = false;
     }
-
-    //`hit` will be either `true` or `false`
-    return hit;
-  };
-
-
-  //The `randomInt` helper function
+  } else {
+    hit = false;
+  }
+  return hit;
+};
 function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  //The `keyboard` helper function
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 function keyboard(keyCode) {
-    var key = {};
-    key.code = keyCode;
-    key.isDown = false;
-    key.isUp = true;
-    key.press = undefined;
-    key.release = undefined;
-    //The `downHandler`
-    key.downHandler = function(event) {
-      if (event.keyCode === key.code) {
-        if (key.isUp && key.press) key.press();
-        key.isDown = true;
-        key.isUp = false;
-      }
-      event.preventDefault();
-    };
+  var key = {};
+  key.code = keyCode;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+  key.downHandler = function(event) {
+    if (event.keyCode === key.code) {
+      if (key.isUp && key.press) key.press();
+      key.isDown = true;
+      key.isUp = false;
+    }
+    event.preventDefault();
+  };
+  key.upHandler = function(event) {
+    if (event.keyCode === key.code) {
+      if (key.isDown && key.release) key.release();
+      key.isDown = false;
+      key.isUp = true;
+    }
+    event.preventDefault();
+  };
+  window.addEventListener(
+    "keydown", key.downHandler.bind(key), false
+  );
+  window.addEventListener(
+    "keyup", key.upHandler.bind(key), false
+  );
+  return key;
+}
 
-    //The `upHandler`
-    key.upHandler = function(event) {
-      if (event.keyCode === key.code) {
-        if (key.isDown && key.release) key.release();
-        key.isDown = false;
-        key.isUp = true;
-      }
-      event.preventDefault();
-    };
+function addExplosionFrames() {
+    // Add loading zeros to numbers below 10
+    var pad = ( n ) => { return n > 9 ? n : '0' + n; };
+    var i, url;
 
-    //Attach event listeners
-    window.addEventListener(
-      "keydown", key.downHandler.bind(key), false
-    );
-    window.addEventListener(
-      "keyup", key.upHandler.bind(key), false
-    );
-    return key;
+    // Rather than passing the result arround, we'll simple expose the array
+    // of frame urls as a global
+    for( var i = 1; i < 24; i++ ) {
+      url = '../starwars/images/explosion/explosion_frame_' + pad( i ) + '.png';
+      EXPLOSION_FRAMES.push( url );
+    }
   }
+
+
+
+function addLightSpeedFrames() {
+    // Add loading zeros to numbers below 10
+    var pad = ( n ) => { return n > 9 ? n : '0' + n; };
+    var i, url;
+
+    // Rather than passing the result arround, we'll simple expose the array
+    // of frame urls as a global
+    for( var i = 1; i < 23; i++ ) {
+      url = '../starwars/images/lightspeed/light-speed-' + String(i) + '.png';
+      LIGHTSPEED_FRAMES.push( url );
+    }
+  }
+
+
+
+
+function getHC(){
+      var params = 'lim=1';
+      //var url =  'http://127.0.0.1:3000/eviaco'; //
+      var url = 'https://coindm.herokuapp.com/eviaco';
+      var xhr = createCORSRequest('GET', url + "?" + params);
+      if (!xhr) {
+         throw new Error('CORS not supported');
+      }
+      // xhr.open("POST", myUrl, true);
+      //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
+      xhr.onload = function() {
+       var text = xhr.responseText;
+       var obj = JSON.parse(text);
+      // console.log(obj);
+       console.log(obj.msg[0].hc);
+       //targetScore.text = obj.msg[0].hc.toString();
+       //targetScore.visible = 1;
+      }
+      xhr.send(null);
+      state = play;
+    }
+
+function getCohort(){
+      var params = 'lim=1';
+      // var url =  'http://127.0.0.1:3000/eviaco';
+      var url = 'https://coindm.herokuapp.com/eviaco';
+
+      var xhr = createCORSRequest('GET', url + "?" + params);
+      if (!xhr) {
+           throw new Error('CORS not supported');
+      }
+      // xhr.open("POST", myUrl, true);
+       //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
+      xhr.onload = function(){ 
+        if (xhr.readyState === xhr.DONE) {
+          if (xhr.status === 200) {
+            //console.log("connected");
+            //console.log(xhr.responseText);
+            //var text = xhr.responseText;
+            //var obj = JSON.parse(text);
+            //cohort = (obj.msg.length)%2;
+            //if (coinFlip(0.5)){
+            //  trainPhase = [1,1,1,1,1,1,1,1,1,1,0]; //10-0
+            //  cohort = 0;
+            //}
+            //else {
+            //  trainPhase = [2,1,1,2,1,1,2,2,1,2,0]; //10-0, 9-1
+            //  cohort = 1;
+            //}
+
+           // state = play;
+          }
+        }
+      }
+ 
+      xhr.send(null);
+      state = play;
+    }
+
 
 function createCORSRequest(method, url) {
   var xhr = new XMLHttpRequest();
@@ -1430,3 +1293,77 @@ function createCORSRequest(method, url) {
   return xhr;
 }
   
+
+function sendData(){
+  //remove ,
+    score = score.substring(0,score.length - 1) + ']';
+    reward = reward.substring(0,reward.length - 1) + ']';
+    numflashleft = numflashleft.substring(0,numflashleft.length - 1) + ']';
+    numflashright = numflashright.substring(0,numflashright.length - 1) + ']';
+    reactiontime = reactiontime.substring(0,reactiontime.length - 1) + ']';
+    //choicetime = choicetime.substring(0,choicetime.length - 1) + ']';
+    choice = choice.substring(0,choice.length - 1) + ']';
+    leftBinRecord = leftBinRecord.substring(0,leftBinRecord.length - 1) + ']';
+    rightBinRecord = rightBinRecord.substring(0,rightBinRecord.length - 1) + ']';
+    //flashtime = flashtime.substring(0,flashtime.length - 1) + ']';
+
+  //create json
+    var text = '{"username":' + '"' + user  +'"' + ',' +  '"hc":' +  totalScore  + ',' + score + ','  + reward + ',' +numflashleft + ',' + numflashright + ',' + reactiontime + ',' + choice + ',' + leftBinRecord + ',' + rightBinRecord + '}';
+
+    var jsondata = JSON.parse(text);
+    //console.log(jsondata);
+    var data = JSON.stringify(jsondata);
+    var url = '/eviaco';
+    var xhr = createCORSRequest('POST', url);
+       if (!xhr) {
+         throw new Error('CORS not supported');
+       }
+    // xhr.open("POST", myUrl, true);
+     //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
+
+     xhr.setRequestHeader('Content-Type', 'application/json');
+     
+     xhr.onload = function() {
+       var text = xhr.responseText;
+       //console.log(text);
+    //   var title = getTitle(text);
+    //   alert('Response from CORS request to ' + url + ': ' + title);
+     };
+
+     xhr.onerror = function() {
+       alert('Woops, there was an error making the request.');
+     };
+     xhr.send(data);
+
+//     totalScore = 0;
+   //  scoreMessage.text = totalScore.toString(); 
+
+     state = getHighScore;
+}
+
+function getHighScore(){
+
+ //get High Score
+    var params = 'lim=1';
+    var url = '/eviaco';
+    var xhr = createCORSRequest('GET', url + "?" + params);
+    if (!xhr) {
+         throw new Error('CORS not supported');
+    }
+    // xhr.open("POST", myUrl, true);
+     //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
+    xhr.onload = function() {
+       var text = xhr.responseText;
+       var obj = JSON.parse(text);
+      // console.log(obj);
+      // console.log(obj.msg[0].hc);
+       globalScoreMessage.text = "High Score " + obj.msg[0].hc.toString();
+       targetScore.text = obj.msg[0].hc.toString();
+       targetScore.visible = 1;
+       yourScoreMessage.text = "Your Score " + totalScore.toString();
+    //   var title = getTitle(text);
+    //   alert('Response from CORS request to ' + url + ': ' + title);
+    }
+    xhr.send(null);
+    state = end;
+}
