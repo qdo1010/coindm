@@ -1231,42 +1231,6 @@ function getHC(){
       state = play;
     }
 
-function getCohort(){
-      var params = 'lim=1';
-      // var url =  'http://127.0.0.1:3000/eviaco';
-      var url = 'https://coindm.herokuapp.com/eviaco';
-
-      var xhr = createCORSRequest('GET', url + "?" + params);
-      if (!xhr) {
-           throw new Error('CORS not supported');
-      }
-      // xhr.open("POST", myUrl, true);
-       //xhr.setRequestHeader('X-PINGOTHER', 'pingpong');
-      xhr.onload = function(){ 
-        if (xhr.readyState === xhr.DONE) {
-          if (xhr.status === 200) {
-            //console.log("connected");
-            //console.log(xhr.responseText);
-            //var text = xhr.responseText;
-            //var obj = JSON.parse(text);
-            //cohort = (obj.msg.length)%2;
-            //if (coinFlip(0.5)){
-            //  trainPhase = [1,1,1,1,1,1,1,1,1,1,0]; //10-0
-            //  cohort = 0;
-            //}
-            //else {
-            //  trainPhase = [2,1,1,2,1,1,2,2,1,2,0]; //10-0, 9-1
-            //  cohort = 1;
-            //}
-
-           // state = play;
-          }
-        }
-      }
- 
-      xhr.send(null);
-      state = play;
-    }
 
 
 function createCORSRequest(method, url) {
