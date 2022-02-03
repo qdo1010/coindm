@@ -298,8 +298,8 @@ window.onresize = resize;
           alienImg = "images/asteroid.png";
           
           let alien = new PIXI.Sprite(PIXI.loader.resources[alienImg].texture);
-          alien.width= randomInt(50, 60);
-          alien.height= randomInt(50, 70);
+          alien.width= randomInt(80, 90);
+          alien.height= randomInt(80, 100);
           alien.anchor.x=0.5;
           alien.anchor.y =0.5;
           alien.x = randomInt(0, app.stage.width);
@@ -1186,7 +1186,7 @@ function addExplosionFrames() {
     // Rather than passing the result arround, we'll simple expose the array
     // of frame urls as a global
     for( var i = 1; i < 24; i++ ) {
-      url = '../starwars/images/explosion/explosion_frame_' + pad( i ) + '.png';
+      url = '../images/explosion/explosion_frame_' + pad( i ) + '.png';
       EXPLOSION_FRAMES.push( url );
     }
   }
@@ -1201,7 +1201,7 @@ function addLightSpeedFrames() {
     // Rather than passing the result arround, we'll simple expose the array
     // of frame urls as a global
     for( var i = 1; i < 23; i++ ) {
-      url = '../starwars/images/lightspeed/light-speed-' + String(i) + '.png';
+      url = '../images/lightspeed/light-speed-' + String(i) + '.png';
       LIGHTSPEED_FRAMES.push( url );
     }
   }
