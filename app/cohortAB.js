@@ -1328,7 +1328,8 @@ function getHighScore(){
        globalScoreMessage.text = "High Score " + obj.msg[0].hc.toString();
        targetScore.text = obj.msg[0].hc.toString();
        targetScore.visible = 1;
-       yourScoreMessage.text = totalScore.toString();
+       yourScoreMessage.text = "Your Score " + totalScore.toString();
+       yourScoreMessage.visible=1;
     //   var title = getTitle(text);
     //   alert('Response from CORS request to ' + url + ': ' + title);
     }
