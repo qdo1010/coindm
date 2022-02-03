@@ -916,8 +916,8 @@ function nextLevel(){
             alienImg = "images/asteroid.png";
             
             let alien = new PIXI.Sprite(PIXI.loader.resources[alienImg].texture);
-            alien.width= randomInt(50, 60);
-            alien.height= randomInt(50, 70);
+            alien.width= randomInt(70, 80);
+            alien.height= randomInt(70, 90);
             alien.anchor.x=0.5;
             alien.anchor.y =0.5;
             alien.x = randomInt(0, app.stage.width);
