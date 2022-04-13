@@ -451,7 +451,8 @@
          }
        };
       trainPhase = [1,1,1,1,1,1,1,1,1,1,0]; //10-0
-      state = getHC;
+      state = play;
+	
       //state = getCohort;
       smoothie.start();
     }
@@ -480,8 +481,8 @@
 
     function getCohort(){
       var params = 'lim=1';
-      //var url =  'http://127.0.0.1:3000/eviaco';
-      var url = 'https://coindm.herokuapp.com/eviaco';
+      var url =  'http://127.0.0.1:3000/eviaco';
+      //var url = 'https://coindm.herokuapp.com/eviaco';
 
       var xhr = createCORSRequest('GET', url + "?" + params);
       if (!xhr) {
@@ -1156,7 +1157,7 @@ function getHighScore(){
 
  //get High Score
     var params = 'lim=1';
-    var url = 'https://coindm.herokuapp.com/eviaco';
+    var url = 'ENTER URL';
     var xhr = createCORSRequest('GET', url + "?" + params);
     if (!xhr) {
          throw new Error('CORS not supported');

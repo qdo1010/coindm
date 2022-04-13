@@ -9,7 +9,7 @@ const path = require('path')
 
 const MongoClient = require("mongodb").MongoClient;
 
-const url = "mongodb+srv://fungame:Northeastern2019!@cluster0-u4iiy.mongodb.net/test?retryWrites=true&w=majority";
+const url = ""
 let db;
 
 
