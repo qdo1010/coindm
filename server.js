@@ -9,7 +9,7 @@ const path = require('path')
 
 const MongoClient = require("mongodb").MongoClient;
 
-const url = ""
+const url = "URL of SERVER"
 let db;
 
 
@@ -37,12 +37,12 @@ app.listen(PORT, async function() {
 
 
 app.use(express.static(path.join(__dirname, 'app')));
-app.get('/app',function(req,res){
+app.get('/DATABASE_NAME',function(req,res){
   res.sendFile(path.join(__dirname+'/app/index.html'));
 });
 
 //Route to create new player
-app.post("/eviaco",async function(req,res){
+app.post("/DATABASE_NAME",async function(req,res){
 	let {username, hc, score, rw, lflash, rflash, rt, choice, ct,lbin,rbin,ft} = req.body;
 	const alreadyExisting = await db
         	.collection("eviaco")
@@ -59,11 +59,11 @@ app.post("/eviaco",async function(req,res){
 	}
 	});
 
-app.put("/eviaco",async function(req,res){
+app.put("/DATABASE_NAME",async function(req,res){
 let {username, hc, score, rw, lflash,rflash, rt,choice,ct,lbin,rbin,ft} = req.body;
 //check if username already exists
 const alreadyExisting = await db
-	.collection("eviaco")
+	.collection("DATABASE_NAME")
 	.findOne({username:username});
 if(alreadyExisting){
 //update player object w the username
@@ -79,7 +79,7 @@ else{
 });
 
 //delete player
-app.delete("/eviaco",async function(req,res){
+app.delete("/DATABASE_NAME",async function(req,res){
 	let {username, hc, score, rw, lflash, rflash, rt, choice, ct,lbin,rbin,ft} = req.body;
 	//check if usrname already exists
 	const alreadyExisting = await db
@@ -97,7 +97,7 @@ app.delete("/eviaco",async function(req,res){
 
 //Leaderboard
 //access the leaderboard
-app.get("/eviaco",async function(req,res){
+app.get("/DATABASE_NAME",async function(req,res){
 //retrieve lim from the query string info
 	let {lim} = req.query;
 	db.collection("eviaco")
