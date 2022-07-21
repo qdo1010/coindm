@@ -1,2 +1,2 @@
 # eviaco
-Indie and Alone 
+Asteroid game ver
