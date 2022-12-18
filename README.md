@@ -7,8 +7,9 @@ To run the game, first set up a local testing server. The instruction for how to
 Either SimpleHTTPServer for python or [http-server](https://www.npmjs.com/package/http-server) should work
 
 #### Instructions:
-Go to oldapp folder and start a local http-server from that directory to start hosting the game. Open the local URL on a browser to play the game:
+Go to oldapp folder and start a local http-server from that directory to start hosting the game. Open the local URL on a browser to play the game
 
+#### Assessing evidence accumulation and rule learning in humans with an online game:
 https://journals.physiology.org/doi/abs/10.1152/jn.00124.2022
 
 ### Asteroid Game (Reaction Time Version - WIP):
